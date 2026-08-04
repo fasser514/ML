@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M&L - لوحة التحكم</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --black: #000000; --white: #ffffff; --light-gray: #f8f8f8; --gray: #e0e0e0; --dark-gray: #333333; --border: #cccccc; --danger: #dc3545; --success: #28a745; }
+        
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f5f5f5; direction: rtl; color: var(--black); }
+        
+        .admin-container { display: flex; min-height: 100vh; }
+        
+        /* Sidebar */
+        .sidebar { width: 260px; background: var(--black); color: var(--white); position: fixed; top: 0; right: 0; bottom: 0; overflow-y: auto; z-index: 1000; }
+        .sidebar-header { padding: 30px 25px; border-bottom: 1px solid rgba(255,255,255,0.15); text-align: center; margin-bottom: 20px; }
+        .brand-name { font-family: 'Aref Ruqaa', serif; font-size: 36px; font-weight: 400; color: var(--white); letter-spacing: 1px; }
+        .sidebar-header p { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 8px; letter-spacing: 2px; text-transform: uppercase; }
+        .sidebar-nav { padding: 0 15px; }
+        .sidebar-nav a { display: flex; align-items: center; gap: 10px; padding: 14px 15px; color: rgba(255,255,255,0.7); text-decoration: none; border-radius: 6px; transition: all 0.3s; margin-bottom: 3px; font-size: 14px; }
+        .sidebar-nav a:hover, .sidebar-nav a.active { background: rgba(255,255,255,0.1); color: var(--white); }
+        .sidebar-nav a i { width: 18px; text-align: center; }
+        .back-to-site { margin-top: 25px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 18px; }
+        
+        /* Main */
+        .admin-main { flex: 1; margin-right: 260px; padding: 30px; }
+        .admin-section { display: none; background: var(--white); border-radius: 10px; padding: 30px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); border: 1px solid var(--border); }
+        .admin-section.active { display: block; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid var(--light-gray); }
+        .section-header h1 { font-size: 22px; font-weight: 700; }
+        
+        /* Buttons */
+        .btn { border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s; font-family: inherit; display: inline-flex; align-items: center; gap: 6px; }
+        .btn-primary { background: var(--black); color: var(--white); }
+        .btn-primary:hover { background: #333; transform: translateY(-1px); }
+        .btn-secondary { background: var(--gray); color: var(--black); }
+        .btn-secondary:hover { background: #ccc; }
+        .btn-danger { background: #fff; color: var(--danger); border: 1px solid var(--danger); }
+        .btn-danger:hover { background: var(--danger); color: #fff; }
+        .btn-edit { background: #fff; color: var(--black); border: 1px solid var(--black); }
+        .btn-edit:hover { background: var(--black); color: #fff; }
+        .btn-icon { width: 34px; height: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; border: 1px solid var(--border); background: var(--white); font-size: 14px; transition: all 0.2s; margin: 0 2px; }
+        .btn-icon.delete:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
+        .btn-icon.edit:hover { background: var(--black); color: #fff; border-color: var(--black); }
+        
+        /* Forms */
+        .form-container { background: #fafafa; padding: 25px; border-radius: 10px; margin-bottom: 25px; border: 1px solid var(--gray); display: none; }
+        .form-container.show { display: block; }
+        .form-container h3 { margin-bottom: 20px; font-size: 18px; font-weight: 700; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 13px; color: var(--dark-gray); }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; font-family: inherit; background: var(--white); transition: border 0.2s; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--black); }
+        .form-actions { display: flex; gap: 10px; margin-top: 20px; }
+        
+        /* Image Upload */
+        .image-upload-area { border: 2px dashed var(--border); border-radius: 8px; padding: 25px; text-align: center; cursor: pointer; position: relative; background: var(--white); transition: all 0.2s; }
+        .image-upload-area:hover { border-color: var(--black); background: #fafafa; }
+        .image-upload-area i { font-size: 36px; color: #999; margin-bottom: 8px; display: block; }
+        .image-upload-area p { font-size: 13px; color: #999; margin: 0; }
+        .image-upload-area input[type="file"] { position: absolute; top: 0; left: 0; right: 0; bottom: 0; opacity: 0; cursor: pointer; }
+        .image-preview { margin-top: 12px; display: flex; align-items: center; gap: 12px; }
+        .image-preview img { width: 100px; height: 100px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); }
+        .image-preview .remove-btn { color: var(--danger); cursor: pointer; font-size: 20px; }
+        
+        /* Tables */
+        .table-container { border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+        table { width: 100%; border-collapse: collapse; background: var(--white); }
+        thead { background: #fafafa; }
+        th { padding: 14px 15px; text-align: right; font-weight: 700; font-size: 12px; color: var(--dark-gray); border-bottom: 2px solid var(--border); text-transform: uppercase; letter-spacing: 0.5px; }
+        td { padding: 12px 15px; border-bottom: 1px solid var(--gray); font-size: 13px; vertical-align: middle; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background: #fafafa; }
+        .status-badge { padding: 5px 12px; border-radius: 12px; font-size: 11px; font-weight: 700; }
+        .status-confirmed { background: #e8f5e9; color: #2e7d32; }
+        
+        /* Toast */
+        .toast { position: fixed; bottom: 25px; left: 25px; background: var(--black); color: var(--white); padding: 14px 24px; border-radius: 8px; transform: translateX(-120%); transition: transform 0.3s ease; z-index: 3000; font-size: 14px; font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        .toast.show { transform: translateX(0); }
+        
+        /* Loading */
+        .loading { text-align: center; padding: 40px; color: #999; }
+        .loading i { font-size: 30px; animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        
+        /* Empty */
+        .empty-state { text-align: center; padding: 50px; color: #999; }
+        .empty-state i { font-size: 40px; margin-bottom: 10px; display: block; opacity: 0.5; }
+        
+        .actions-cell { display: flex; gap: 4px; }
+        
+        @media (max-width: 768px) {
+            .sidebar { position: relative; width: 100%; height: auto; }
+            .admin-main { margin-right: 0; }
+            .admin-container { flex-direction: column; }
+            .section-header { flex-direction: column; gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="brand-name">M&L</div>
+                <p>Luxury Electronics</p>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" onclick="showSection('categories'); return false;" class="active" id="nav-categories">
+                    <i class="fas fa-layer-group"></i> الأقسام
+                </a>
+                <a href="#" onclick="showSection('products'); return false;" id="nav-products">
+                    <i class="fas fa-box"></i> المنتجات
+                </a>
+                <a href="#" onclick="showSection('orders'); return false;" id="nav-orders">
+                    <i class="fas fa-shopping-bag"></i> سجل الطلبات
+                </a>
+                <a href="index.html" class="back-to-site">
+                    <i class="fas fa-arrow-left"></i> العودة للمتجر
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="admin-main">
+            
+            <!-- ==================== Categories ==================== -->
+            <section id="section-categories" class="admin-section active">
+                <div class="section-header">
+                    <h1>📂 إدارة الأقسام</h1>
+                    <button class="btn btn-primary" onclick="openCategoryForm()">
+                        <i class="fas fa-plus"></i> إضافة قسم جديد
+                    </button>
+                </div>
+                
+                <!-- Category Form -->
+                <div class="form-container" id="categoryForm">
+                    <h3 id="categoryFormTitle">➕ إضافة قسم جديد</h3>
+                    <input type="hidden" id="categoryId">
+                    <input type="hidden" id="categoryImageData">
+                    
+                    <div class="form-group">
+                        <label>اسم القسم *</label>
+                        <input type="text" id="categoryName" placeholder="مثال: إيربودز" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>الأيقونة (Font Awesome)</label>
+                        <input type="text" id="categoryIcon" placeholder="مثال: fa-headphones">
+                        <small style="color:#999;display:block;margin-top:4px;">اختياري - اتركه فارغاً لاستخدام الأيقونة الافتراضية</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>صورة القسم (اختياري)</label>
+                        <div class="image-upload-area" id="categoryUploadArea">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>اضغط هنا لرفع صورة</p>
+                            <input type="file" accept="image/*" onchange="handleImageUpload(this, 'categoryPreview', 'categoryImageData')">
+                        </div>
+                        <div class="image-preview" id="categoryPreview" style="display:none;"></div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-primary" onclick="saveCategory()">
+                            <i class="fas fa-save"></i> حفظ القسم
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="closeCategoryForm()">
+                            ✕ إلغاء
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Categories Table -->
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width:50px;">#</th>
+                                <th style="width:70px;">صورة</th>
+                                <th>اسم القسم</th>
+                                <th style="width:100px;">المنتجات</th>
+                                <th style="width:120px;">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="categoriesTableBody">
+                            <tr><td colspan="5" class="loading"><i class="fas fa-spinner"></i> جاري التحميل...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- ==================== Products ==================== -->
+            <section id="section-products" class="admin-section">
+                <div class="section-header">
+                    <h1>📦 إدارة المنتجات</h1>
+                    <button class="btn btn-primary" onclick="openProductForm()">
+                        <i class="fas fa-plus"></i> إضافة منتج جديد
+                    </button>
+                </div>
+                
+                <!-- Product Form -->
+                <div class="form-container" id="productForm">
+                    <h3 id="productFormTitle">➕ إضافة منتج جديد</h3>
+                    <input type="hidden" id="productId">
+                    <input type="hidden" id="productImageData">
+                    
+                    <div class="form-group">
+                        <label>القسم *</label>
+                        <select id="productCategory" required>
+                            <option value="">-- اختر القسم --</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>اسم المنتج *</label>
+                        <input type="text" id="productName" placeholder="مثال: AirPods Pro 2" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>السعر (بالجنيه المصري) *</label>
+                        <input type="number" id="productPrice" placeholder="مثال: 5500" required step="0.01" min="0">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>الوصف (اختياري)</label>
+                        <textarea id="productDescription" rows="3" placeholder="وصف مختصر للمنتج..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>صورة المنتج (اختياري)</label>
+                        <div class="image-upload-area">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>اضغط هنا لرفع صورة</p>
+                            <input type="file" accept="image/*" onchange="handleImageUpload(this, 'productPreview', 'productImageData')">
+                        </div>
+                        <div class="image-preview" id="productPreview" style="display:none;"></div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-primary" onclick="saveProduct()">
+                            <i class="fas fa-save"></i> حفظ المنتج
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="closeProductForm()">
+                            ✕ إلغاء
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Products Table -->
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width:50px;">#</th>
+                                <th style="width:70px;">صورة</th>
+                                <th>الاسم</th>
+                                <th>القسم</th>
+                                <th>السعر</th>
+                                <th style="width:120px;">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productsTableBody">
+                            <tr><td colspan="6" class="loading"><i class="fas fa-spinner"></i> جاري التحميل...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- ==================== Orders ==================== -->
+            <section id="section-orders" class="admin-section">
+                <div class="section-header">
+                    <h1>🛒 سجل الطلبات</h1>
+                </div>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>رقم الطلب</th>
+                                <th>التاريخ</th>
+                                <th>المحافظة</th>
+                                <th>العنوان</th>
+                                <th>الهاتف</th>
+                                <th>الإجمالي</th>
+                                <th>الحالة</th>
+                                <th style="width:60px;">حذف</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ordersTableBody">
+                            <tr><td colspan="8" class="loading"><i class="fas fa-spinner"></i> جاري التحميل...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="adminToast"></div>
+
+    <script>
+        // ==================== FIREBASE CONFIG ====================
+        const firebaseConfig = {
+            apiKey: "AIzaSyCdz3qCrVphlm9BCpDvztOZO9LvxE61HIU",
+            authDomain: "m-l-store.firebaseapp.com",
+            projectId: "m-l-store",
+            storageBucket: "m-l-store.firebasestorage.app",
+            messagingSenderId: "42131228944",
+            appId: "1:42131228944:web:60a690ceb74235d8a83d95"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        console.log('✅ Firebase Connected');
+
+        // ==================== GLOBAL VARIABLES ====================
+        let categoriesList = [];
+        let productsList = [];
+        let ordersList = [];
+
+        // ==================== TOAST ====================
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('adminToast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // ==================== NAVIGATION ====================
+        function showSection(section) {
+            document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
+            
+            document.getElementById('section-' + section).classList.add('active');
+            document.getElementById('nav-' + section).classList.add('active');
+            
+            if (section === 'categories') loadCategories();
+            if (section === 'products') loadProducts();
+            if (section === 'orders') loadOrders();
+        }
+
+        // ==================== IMAGE UPLOAD ====================
+        function handleImageUpload(input, previewId, dataId) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            if (!file.type.startsWith('image/')) {
+                showToast('⚠️ الرجاء اختيار ملف صورة فقط');
+                return;
+            }
+            
+            if (file.size > 5 * 1024 * 1024) {
+                showToast('⚠️ حجم الصورة كبير جداً (الحد الأقصى 5MB)');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById(dataId).value = e.target.result;
+                
+                const preview = document.getElementById(previewId);
+                preview.style.display = 'flex';
+                preview.innerHTML = `
+                    <img src="${e.target.result}" alt="Preview">
+                    <span class="remove-btn" onclick="removeImage('${previewId}', '${dataId}')">
+                        <i class="fas fa-times-circle"></i>
+                    </span>
+                `;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeImage(previewId, dataId) {
+            document.getElementById(previewId).style.display = 'none';
+            document.getElementById(previewId).innerHTML = '';
+            document.getElementById(dataId).value = '';
+        }
+
+        // ==================== CATEGORIES CRUD ====================
+        async function loadCategories() {
+            console.log('🔄 Loading categories...');
+            const tbody = document.getElementById('categoriesTableBody');
+            tbody.innerHTML = '<tr><td colspan="5" class="loading"><i class="fas fa-spinner"></i> جاري التحميل...</td></tr>';
+            
+            try {
+                const snapshot = await db.collection('categories').get();
+                categoriesList = [];
+                snapshot.forEach(doc => {
+                    categoriesList.push({ id: doc.id, ...doc.data() });
+                });
+                console.log('✅ Categories loaded:', categoriesList.length);
+                renderCategoriesTable();
+            } catch (error) {
+                console.error('❌ Error loading categories:', error);
+                tbody.innerHTML = '<tr><td colspan="5" class="empty-state">❌ خطأ في تحميل الأقسام</td></tr>';
+                showToast('❌ فشل تحميل الأقسام');
+            }
+        }
+
+        function renderCategoriesTable() {
+            const tbody = document.getElementById('categoriesTableBody');
+            
+            if (categoriesList.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><i class="fas fa-folder-open"></i><p>لا توجد أقسام بعد</p><p style="font-size:12px;color:#bbb;">اضغط على "إضافة قسم جديد" للبدء</p></td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = categoriesList.map((cat, index) => {
+                const productCount = productsList.filter(p => p.categoryId == cat.id).length;
+                return `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>
+                            ${cat.image ? 
+                                `<img src="${cat.image}" alt="${cat.name}" style="width:45px;height:45px;object-fit:cover;border-radius:6px;">` : 
+                                `<i class="fas ${cat.icon || 'fa-folder'}" style="font-size:22px;color:#999;"></i>`
+                            }
+                        </td>
+                        <td><strong>${cat.name}</strong></td>
+                        <td><span style="background:#f0f0f0;padding:4px 10px;border-radius:10px;font-size:12px;">${productCount} منتج</span></td>
+                        <td>
+                            <div class="actions-cell">
+                                <button class="btn-icon edit" onclick="editCategory('${cat.id}')" title="تعديل">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn-icon delete" onclick="deleteCategory('${cat.id}')" title="حذف">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function openCategoryForm(catId = null) {
+            const form = document.getElementById('categoryForm');
+            form.classList.add('show');
+            
+            document.getElementById('categoryPreview').style.display = 'none';
+            document.getElementById('categoryPreview').innerHTML = '';
+            document.getElementById('categoryImageData').value = '';
+            
+            if (catId) {
+                const cat = categoriesList.find(c => c.id === catId);
+                if (cat) {
+                    document.getElementById('categoryFormTitle').textContent = '✏️ تعديل القسم';
+                    document.getElementById('categoryId').value = cat.id;
+                    document.getElementById('categoryName').value = cat.name || '';
+                    document.getElementById('categoryIcon').value = cat.icon || '';
+                    
+                    if (cat.image) {
+                        document.getElementById('categoryImageData').value = cat.image;
+                        const preview = document.getElementById('categoryPreview');
+                        preview.style.display = 'flex';
+                        preview.innerHTML = `
+                            <img src="${cat.image}" alt="Preview">
+                            <span class="remove-btn" onclick="removeImage('categoryPreview', 'categoryImageData')">
+                                <i class="fas fa-times-circle"></i>
+                            </span>
+                        `;
+                    }
+                }
+            } else {
+                document.getElementById('categoryFormTitle').textContent = '➕ إضافة قسم جديد';
+                document.getElementById('categoryId').value = '';
+                document.getElementById('categoryName').value = '';
+                document.getElementById('categoryIcon').value = '';
+            }
+            
+            form.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function editCategory(catId) {
+            openCategoryForm(catId);
+        }
+
+        function closeCategoryForm() {
+            document.getElementById('categoryForm').classList.remove('show');
+        }
+
+        async function saveCategory() {
+            const id = document.getElementById('categoryId').value;
+            const name = document.getElementById('categoryName').value.trim();
+            const icon = document.getElementById('categoryIcon').value.trim();
+            const image = document.getElementById('categoryImageData').value;
+            
+            if (!name) {
+                showToast('⚠️ الرجاء إدخال اسم القسم');
+                return;
+            }
+            
+            const data = {
+                name: name,
+                icon: icon || 'fa-folder',
+                image: image || ''
+            };
+            
+            try {
+                if (id) {
+                    await db.collection('categories').doc(id).set(data);
+                    showToast('✅ تم تحديث القسم بنجاح');
+                } else {
+                    await db.collection('categories').add(data);
+                    showToast('✅ تم إضافة القسم بنجاح');
+                }
+                
+                closeCategoryForm();
+                await loadCategories();
+            } catch (error) {
+                console.error('Error saving category:', error);
+                showToast('❌ فشل حفظ القسم');
+            }
+        }
+
+        async function deleteCategory(catId) {
+            const cat = categoriesList.find(c => c.id === catId);
+            if (!cat) return;
+            
+            if (!confirm(`⚠️ هل أنت متأكد من حذف قسم "${cat.name}"؟\nسيتم حذف جميع المنتجات المرتبطة به أيضاً.`)) {
+                return;
+            }
+            
+            try {
+                // Delete all products in this category
+                const productsSnap = await db.collection('products').where('categoryId', '==', catId).get();
+                const batch = db.batch();
+                productsSnap.forEach(doc => batch.delete(doc.ref));
+                await batch.commit();
+                
+                // Delete the category
+                await db.collection('categories').doc(catId).delete();
+                
+                showToast('🗑️ تم حذف القسم وجميع منتجاته');
+                await loadCategories();
+            } catch (error) {
+                console.error('Error deleting category:', error);
+                showToast('❌ فشل حذف القسم');
+            }
+        }
+
+        // ==================== PRODUCTS CRUD ====================
+        async function loadProducts() {
+            console.log('🔄 Loading products...');
+            const tbody = document.getElementById('productsTableBody');
+            tbody.innerHTML = '<tr><td colspan="6" class="loading"><i class="fas fa-spinner"></i> جاري التحميل...</td></tr>';
+            
+            try {
+                // Load categories first
+                const catSnap = await db.collection('categories').get();
+                categoriesList = [];
+                catSnap.forEach(doc => categoriesList.push({ id: doc.id, ...doc.data() }));
+                
+                // Load products
+                const prodSnap = await db.collection('products').get();
+                productsList = [];
+                prodSnap.forEach(doc => productsList.push({ id: doc.id, ...doc.data() }));
+                
+                console.log('✅ Products loaded:', productsList.length);
+                renderProductsTable();
+                populateCategoryDropdown();
+            } catch (error) {
+                console.error('❌ Error loading products:', error);
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-state">❌ خطأ في تحميل المنتجات</td></tr>';
+                showToast('❌ فشل تحميل المنتجات');
+            }
+        }
+
+        function renderProductsTable() {
+            const tbody = document.getElementById('productsTableBody');
+            
+            if (productsList.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><i class="fas fa-box-open"></i><p>لا توجد منتجات بعد</p></td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = productsList.map((prod, index) => {
+                const category = categoriesList.find(c => c.id == prod.categoryId);
+                return `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>
+                            ${prod.image ? 
+                                `<img src="${prod.image}" alt="${prod.name}" style="width:45px;height:45px;object-fit:cover;border-radius:6px;">` : 
+                                '<i class="fas fa-box" style="font-size:20px;color:#ccc;"></i>'
+                            }
+                        </td>
+                        <td><strong>${prod.name}</strong></td>
+                        <td>${category ? category.name : '<span style="color:red;">بدون قسم</span>'}</td>
+                        <td><strong style="color:var(--black);">${prod.price.toLocaleString()} ج.م</strong></td>
+                        <td>
+                            <div class="actions-cell">
+                                <button class="btn-icon edit" onclick="editProduct('${prod.id}')" title="تعديل">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn-icon delete" onclick="deleteProduct('${prod.id}')" title="حذف">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function populateCategoryDropdown() {
+            const select = document.getElementById('productCategory');
+            select.innerHTML = '<option value="">-- اختر القسم --</option>' + 
+                categoriesList.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+        }
+
+        function openProductForm(prodId = null) {
+            populateCategoryDropdown();
+            
+            const form = document.getElementById('productForm');
+            form.classList.add('show');
+            
+            document.getElementById('productPreview').style.display = 'none';
+            document.getElementById('productPreview').innerHTML = '';
+            document.getElementById('productImageData').value = '';
+            
+            if (prodId) {
+                const prod = productsList.find(p => p.id === prodId);
+                if (prod) {
+                    document.getElementById('productFormTitle').textContent = '✏️ تعديل المنتج';
+                    document.getElementById('productId').value = prod.id;
+                    document.getElementById('productCategory').value = prod.categoryId || '';
+                    document.getElementById('productName').value = prod.name || '';
+                    document.getElementById('productPrice').value = prod.price || '';
+                    document.getElementById('productDescription').value = prod.description || '';
+                    
+                    if (prod.image) {
+                        document.getElementById('productImageData').value = prod.image;
+                        const preview = document.getElementById('productPreview');
+                        preview.style.display = 'flex';
+                        preview.innerHTML = `
+                            <img src="${prod.image}" alt="Preview">
+                            <span class="remove-btn" onclick="removeImage('productPreview', 'productImageData')">
+                                <i class="fas fa-times-circle"></i>
+                            </span>
+                        `;
+                    }
+                }
+            } else {
+                document.getElementById('productFormTitle').textContent = '➕ إضافة منتج جديد';
+                document.getElementById('productId').value = '';
+                document.getElementById('productCategory').value = '';
+                document.getElementById('productName').value = '';
+                document.getElementById('productPrice').value = '';
+                document.getElementById('productDescription').value = '';
+            }
+            
+            form.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function editProduct(prodId) {
+            openProductForm(prodId);
+        }
+
+        function closeProductForm() {
+            document.getElementById('productForm').classList.remove('show');
+        }
+
+        async function saveProduct() {
+            const id = document.getElementById('productId').value;
+            const categoryId = document.getElementById('productCategory').value;
+            const name = document.getElementById('productName').value.trim();
+            const price = parseFloat(document.getElementById('productPrice').value);
+            const description = document.getElementById('productDescription').value.trim();
+            const image = document.getElementById('productImageData').value;
+            
+            if (!categoryId) {
+                showToast('⚠️ الرجاء اختيار القسم');
+                return;
+            }
+            
+            if (!name) {
+                showToast('⚠️ الرجاء إدخال اسم المنتج');
+                return;
+            }
+            
+            if (!price || price <= 0) {
+                showToast('⚠️ الرجاء إدخال سعر صحيح');
+                return;
+            }
+            
+            const data = {
+                categoryId: categoryId,
+                name: name,
+                price: price,
+                description: description || '',
+                image: image || ''
+            };
+            
+            try {
+                if (id) {
+                    await db.collection('products').doc(id).set(data);
+                    showToast('✅ تم تحديث المنتج بنجاح');
+                } else {
+                    await db.collection('products').add(data);
+                    showToast('✅ تم إضافة المنتج بنجاح');
+                }
+                
+                closeProductForm();
+                await loadProducts();
+            } catch (error) {
+                console.error('Error saving product:', error);
+                showToast('❌ فشل حفظ المنتج');
+            }
+        }
+
+        async function deleteProduct(prodId) {
+            const prod = productsList.find(p => p.id === prodId);
+            if (!prod) return;
+            
+            if (!confirm(`⚠️ هل أنت متأكد من حذف "${prod.name}"؟`)) {
+                return;
+            }
+            
+            try {
+                await db.collection('products').doc(prodId).delete();
+                showToast('🗑️ تم حذف المنتج بنجاح');
+                await loadProducts();
+            } catch (error) {
+                console.error('Error deleting product:', error);
+                showToast('❌ فشل حذف المنتج');
+            }
+        }
+
+        // ==================== ORDERS ====================
+        async function loadOrders() {
+            console.log('🔄 Loading orders...');
+            const tbody = document.getElementById('ordersTableBody');
+            tbody.innerHTML = '<tr><td colspan="8" class="loading"><i class="fas fa-spinner"></i> جاري التحميل...</td></tr>';
+            
+            try {
+                const snapshot = await db.collection('orders').orderBy('date', 'desc').get();
+                ordersList = [];
+                snapshot.forEach(doc => {
+                    ordersList.push({ id: doc.id, ...doc.data() });
+                });
+                console.log('✅ Orders loaded:', ordersList.length);
+                renderOrdersTable();
+            } catch (error) {
+                console.error('❌ Error loading orders:', error);
+                tbody.innerHTML = '<tr><td colspan="8" class="empty-state">❌ خطأ في تحميل الطلبات</td></tr>';
+            }
+        }
+
+        function renderOrdersTable() {
+            const tbody = document.getElementById('ordersTableBody');
+            
+            if (ordersList.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><i class="fas fa-shopping-bag"></i><p>لا توجد طلبات بعد</p></td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = ordersList.map(order => `
+                <tr>
+                    <td><strong>#${order.id.slice(-6)}</strong></td>
+                    <td>${order.date ? new Date(order.date).toLocaleDateString('ar-EG') : '—'}</td>
+                    <td>${order.governorate || '—'}</td>
+                    <td>${order.address ? order.address.substring(0, 30) + '...' : '—'}</td>
+                    <td>${order.phone || '—'}</td>
+                    <td><strong>${(order.total || 0).toLocaleString()} ج.م</strong></td>
+                    <td><span class="status-badge status-confirmed">✅ مؤكد</span></td>
+                    <td>
+                        <button class="btn-icon delete" onclick="deleteOrder('${order.id}')" title="حذف">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function deleteOrder(orderId) {
+            if (!confirm('⚠️ هل أنت متأكد من حذف هذا الطلب؟')) return;
+            
+            try {
+                await db.collection('orders').doc(orderId).delete();
+                showToast('🗑️ تم حذف الطلب بنجاح');
+                await loadOrders();
+            } catch (error) {
+                console.error('Error deleting order:', error);
+                showToast('❌ فشل حذف الطلب');
+            }
+        }
+
+        // ==================== INIT ====================
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('🚀 Admin Panel Starting...');
+            await loadCategories();
+            console.log('✅ Admin Panel Ready');
+        });
+    </script>
+</body>
+</html>
