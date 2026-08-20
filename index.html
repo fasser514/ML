@@ -42,13 +42,12 @@
         .section h2 { font-size: 28px; margin-bottom: 35px; color: var(--black); font-weight: 600; padding-bottom: 15px; position: relative; }
         .section h2::after { content: ''; position: absolute; bottom: 0; right: 0; width: 50px; height: 2px; background: var(--black); }
         
-        /* Categories - صور مستطيلة */
+        /* Categories - مستطيلة */
         .categories-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
         .category-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; cursor: pointer; transition: var(--transition); }
         .category-card:hover { border-color: var(--black); transform: translateY(-3px); box-shadow: var(--shadow-hover); }
         .category-image-container { width: 100%; height: 200px; background: var(--light-gray); display: flex; align-items: center; justify-content: center; overflow: hidden; border-bottom: 1px solid var(--gray); }
-        .category-image-container img { width: 100%; height: 100%; object-fit: contain; padding: 15px; transition: var(--transition); }
-        .category-card:hover .category-image-container img { transform: scale(1.05); }
+        .category-image-container img { width: 100%; height: 100%; object-fit: cover; }
         .category-icon { font-size: 60px; color: #ccc; opacity: 0.5; }
         .category-info { padding: 20px; text-align: center; }
         .category-info h3 { font-size: 18px; font-weight: 600; color: var(--black); }
@@ -61,8 +60,7 @@
         .product-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; transition: var(--transition); }
         .product-card:hover { box-shadow: var(--shadow-hover); border-color: var(--black); }
         .product-image-container { width: 100%; height: 250px; background: var(--light-gray); display: flex; align-items: center; justify-content: center; overflow: hidden; border-bottom: 1px solid var(--gray); }
-        .product-image-container img { width: 100%; height: 100%; object-fit: contain; padding: 15px; transition: var(--transition); }
-        .product-card:hover .product-image-container img { transform: scale(1.05); }
+        .product-image-container img { width: 100%; height: 100%; object-fit: cover; }
         .product-placeholder { font-size: 60px; color: #ccc; opacity: 0.5; }
         .product-info { padding: 20px; }
         .product-info h3 { font-size: 16px; margin-bottom: 8px; font-weight: 600; }
@@ -78,7 +76,7 @@
         .cart-item { display: flex; align-items: center; padding: 18px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 12px; gap: 18px; }
         .cart-item:hover { border-color: var(--black); }
         .cart-item-image { width: 90px; height: 90px; background: var(--light-gray); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; font-size: 28px; color: #ccc; flex-shrink: 0; overflow: hidden; border: 1px solid var(--gray); }
-        .cart-item-image img { width: 100%; height: 100%; object-fit: contain; padding: 8px; }
+        .cart-item-image img { width: 100%; height: 100%; object-fit: cover; }
         .cart-item-info { flex: 1; }
         .cart-item-info h4 { font-size: 15px; margin-bottom: 6px; font-weight: 600; }
         .cart-item-price { color: var(--black); font-weight: 700; font-size: 16px; }
@@ -172,7 +170,6 @@
     </style>
 </head>
 <body>
-    <!-- Header -->
     <header class="header">
         <div class="container">
             <a href="#" class="logo" onclick="showSection('categories'); return false;">
@@ -189,9 +186,7 @@
         </div>
     </header>
 
-    <!-- Main Content -->
     <main class="main">
-        <!-- Categories -->
         <section id="categories-section" class="section active">
             <div class="container">
                 <h2>الأقسام</h2>
@@ -201,7 +196,6 @@
             </div>
         </section>
 
-        <!-- Products -->
         <section id="products-section" class="section">
             <div class="container">
                 <div class="section-header">
@@ -212,7 +206,6 @@
             </div>
         </section>
 
-        <!-- Cart -->
         <section id="cart-section" class="section">
             <div class="container">
                 <h2>سلة المشتريات</h2>
@@ -224,33 +217,33 @@
                     <h3>🚚 اختر المحافظة للشحن</h3>
                     <select id="governorateSelect" onchange="updateShipping()">
                         <option value="">-- اختر المحافظة --</option>
-                        <option value="80">القاهرة</option>
-                        <option value="80">الجيزة</option>
-                        <option value="50">الإسكندرية</option>
-                        <option value="80">البحيرة</option>
-                        <option value="80">كفر الشيخ</option>
-                        <option value="80">الدقهلية</option>
-                        <option value="80">الشرقية</option>
-                        <option value="80">الغربية</option>
-                        <option value="80">المنوفية</option>
-                        <option value="80">القليوبية</option>
-                        <option value="95">الفيوم</option>
-                        <option value="95">بني سويف</option>
-                        <option value="130">المنيا</option>
-                        <option value="130">أسيوط</option>
-                        <option value="140">سوهاج</option>
-                        <option value="130">قنا</option>
-                        <option value="140">الأقصر</option>
-                        <option value="140">أسوان</option>
-                        <option value="140">البحر الأحمر</option>
-                        <option value="140">الوادي الجديد</option>
-                        <option value="95">مطروح</option>
-                        <option value="130">شمال سيناء</option>
-                        <option value="130">جنوب سيناء</option>
-                        <option value="80">بورسعيد</option>
-                        <option value="80">الإسماعيلية</option>
-                        <option value="95">السويس</option>
-                        <option value="80">دمياط</option>
+                        <option value="50">القاهرة</option>
+                        <option value="55">الجيزة</option>
+                        <option value="60">الإسكندرية</option>
+                        <option value="65">البحيرة</option>
+                        <option value="65">كفر الشيخ</option>
+                        <option value="60">الدقهلية</option>
+                        <option value="55">الشرقية</option>
+                        <option value="65">الغربية</option>
+                        <option value="55">المنوفية</option>
+                        <option value="50">القليوبية</option>
+                        <option value="70">الفيوم</option>
+                        <option value="75">بني سويف</option>
+                        <option value="80">المنيا</option>
+                        <option value="85">أسيوط</option>
+                        <option value="90">سوهاج</option>
+                        <option value="95">قنا</option>
+                        <option value="100">الأقصر</option>
+                        <option value="110">أسوان</option>
+                        <option value="100">البحر الأحمر</option>
+                        <option value="120">الوادي الجديد</option>
+                        <option value="100">مطروح</option>
+                        <option value="120">شمال سيناء</option>
+                        <option value="120">جنوب سيناء</option>
+                        <option value="70">بورسعيد</option>
+                        <option value="65">الإسماعيلية</option>
+                        <option value="65">السويس</option>
+                        <option value="70">دمياط</option>
                     </select>
                 </div>
 
@@ -280,7 +273,6 @@
         </section>
     </main>
 
-    <!-- Footer -->
     <footer class="footer">
         <div class="container">
             <div class="footer-content">
@@ -297,7 +289,7 @@
                 </div>
                 <div class="footer-contact">
                     <h4>تواصل معنا</h4>
-                    <a href="https://wa.me/201557998200" class="footer-whatsapp" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> واتساب</a>
+                    <a href="https://wa.me/201234567890" class="footer-whatsapp" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> واتساب</a>
                     <p class="footer-email"><i class="far fa-envelope"></i> info@ml-store.com</p>
                 </div>
             </div>
@@ -312,7 +304,6 @@
         </div>
     </footer>
 
-    <!-- Modal -->
     <div class="modal" id="confirmModal">
         <div class="modal-content">
             <h3>📋 تأكيد الطلب</h3>
@@ -324,11 +315,9 @@
         </div>
     </div>
 
-    <!-- Toast -->
     <div class="toast" id="toast"></div>
 
     <script>
-        // ==================== FIREBASE ====================
         const firebaseConfig = {
             apiKey: "AIzaSyCdz3qCrVphlm9BCpDvztOZO9LvxE61HIU",
             authDomain: "m-l-store.firebaseapp.com",
@@ -345,7 +334,7 @@
         let cart = JSON.parse(localStorage.getItem('mlCart')) || [];
         let selectedShipping = 0;
         let selectedGovernorate = '';
-        const WHATSAPP_NUMBER = '201557998200';
+        const WHATSAPP_NUMBER = '201234567890';
 
         async function loadCategories() {
             try {
@@ -395,7 +384,7 @@
             document.getElementById('categoryTitle').textContent = categoryName;
             const filtered = products.filter(p => p.categoryId == categoryId);
             const grid = document.getElementById('productsGrid');
-            if (filtered.length === 0) { grid.innerHTML = '<div style="text-align:center;padding:60px;grid-column:1/-1;"><i class="fas fa-box-open product-placeholder"></i><p style="color:#999;margin-top:15px;">لا توجد منتجات</p></div>'; return; }
+            if (filtered.length === 0) { grid.innerHTML = '<div style="text-align:center;padding:60px;"><i class="fas fa-box-open product-placeholder"></i><p>لا توجد منتجات</p></div>'; return; }
             grid.innerHTML = filtered.map(p => `
                 <div class="product-card">
                     <div class="product-image-container">${p.image ? `<img src="${p.image}" alt="${p.name}">` : '<i class="fas fa-box product-placeholder"></i>'}</div>
@@ -489,14 +478,10 @@
             saveCart(); updateCartCount(); closeModal(); showSection('categories');
             ['governorateSelect','customerAddress','customerPhone','customerPhone2'].forEach(id => document.getElementById(id).value = '');
             
-            const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
-            const link = document.createElement('a');
-            link.href = whatsappUrl;
-            link.target = '_blank';
-            link.rel = 'noopener noreferrer';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            // فتح واتساب - طريقة مضمونة للموبايل والكمبيوتر
+            const whatsappUrl = 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(msg);
+            window.location.href = whatsappUrl;
+            
             showToast('✅ تم الإرسال');
         }
 
